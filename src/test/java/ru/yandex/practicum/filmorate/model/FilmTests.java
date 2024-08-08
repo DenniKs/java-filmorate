@@ -4,22 +4,20 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FilmTests {
-    private Validator validator;
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    Validator validator = factory.getValidator();
 
-    @BeforeEach
-    public void setUp() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
-    }
+    FilmController filmController = new FilmController();
 
     @Test
     public void testValidFilm() {
@@ -30,7 +28,7 @@ public class FilmTests {
         film.setDuration(120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
-        assertEquals(0, violations.size());
+        assertTrue(violations.isEmpty());
     }
 
     @Test
@@ -42,7 +40,11 @@ public class FilmTests {
         film.setDuration(120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
+
         assertEquals(1, violations.size());
+
+        ConstraintViolation<Film> violation = violations.iterator().next();
+        assertEquals("name", violation.getPropertyPath().toString());
     }
 
     @Test
@@ -54,7 +56,25 @@ public class FilmTests {
         film.setDuration(120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
+
         assertEquals(1, violations.size());
+
+        ConstraintViolation<Film> violation = violations.iterator().next();
+        assertEquals("description", violation.getPropertyPath().toString());
+    }
+
+    @Test
+    public void testFilmWithReleaseDateBefore1895() {
+        Film film = new Film();
+        film.setName("Test Film");
+        film.setDescription("Test Description");
+        film.setReleaseDate(LocalDate.of(1895, 12, 27));
+        film.setDuration(120);
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> filmController.addFilm(film));
+
+        assertEquals("До 28 декабря 1895 года кино не производили или продолжительность неверная",
+                exception.getMessage());
     }
 
     @Test
@@ -66,6 +86,12 @@ public class FilmTests {
         film.setDuration(-120);
 
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
+
         assertEquals(1, violations.size());
+
+        ConstraintViolation<Film> violation = violations.iterator().next();
+        assertEquals("duration", violation.getPropertyPath().toString());
     }
+
+
 }
