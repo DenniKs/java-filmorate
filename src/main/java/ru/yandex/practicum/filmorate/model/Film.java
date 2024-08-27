@@ -28,5 +28,5 @@ public class Film {
     private int duration;
 
     private String genre;
-    private RatingMpaa ratingMpaa;
+    private RatingMpa ratingMpa;
 }
