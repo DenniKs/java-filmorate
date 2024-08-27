@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public Film create(Film film) {
+        check(film);
         return filmStorage.create(film);
     }
 
@@ -79,5 +81,19 @@ public class FilmService {
                 .sorted((o1, o2) -> Integer.compare(o2.getUsersLikes().size(), o1.getUsersLikes().size()))
                 .limit(count)
                 .collect(Collectors.toList());
+    }
+
+    private void check(Film filmToAdd) {
+        boolean exists = filmStorage.findAll().stream()
+                .anyMatch(film -> isAlreadyExist(filmToAdd, film));
+        if (exists) {
+            log.warn("Фильм к добавлению: {}", filmToAdd);
+            throw new ValidationException("Такой фильм уже существует в коллекции");
+        }
+    }
+
+    private boolean isAlreadyExist(Film filmToAdd, Film film) {
+        return filmToAdd.getName().equals(film.getName()) &&
+                filmToAdd.getReleaseDate().equals(film.getReleaseDate());
     }
 }

@@ -1,13 +1,16 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.*;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/films")
@@ -51,7 +54,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") @Positive(message = "Количество должно быть положительным") Integer count) {
         return filmService.getPopularFilms(count);
     }
 }

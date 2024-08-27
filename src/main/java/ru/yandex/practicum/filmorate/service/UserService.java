@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import com.sun.jdi.InternalException;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,13 @@ public class UserService {
     private final UserStorage userStorage;
 
     public User create(User user) {
+        validate(user);
+        check(user);
         return userStorage.create(user);
     }
 
     public User update(User user) {
+        validate(user);
         return userStorage.update(user);
     }
 
@@ -110,5 +114,26 @@ public class UserService {
                 .filter(friendId -> secondUser.getFriends().contains(friendId))
                 .map(userStorage::getById)
                 .collect(Collectors.toList());
+    }
+
+    private void validate(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.warn("Не заполнено Имя пользователя заменено на Логин: '{}'", user.getName());
+        }
+    }
+
+    private void check(User userToAdd) {
+        boolean exists = userStorage.getUsers().values().stream()
+                .anyMatch(user -> isAlreadyExist(userToAdd, user));
+        if (exists) {
+            log.warn("Введенный Email пользователя: '{}'", userToAdd);
+            throw new ValidationException("Пользователь с таким Email или логином уже существует");
+        }
+    }
+
+    private boolean isAlreadyExist(User userToAdd, User user) {
+        return userToAdd.getLogin().equals(user.getLogin()) ||
+                userToAdd.getEmail().equals(user.getEmail());
     }
 }

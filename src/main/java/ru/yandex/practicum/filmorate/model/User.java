@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -12,7 +13,9 @@ import java.util.Set;
 @AllArgsConstructor()
 @NoArgsConstructor
 public class User {
+    @JsonIgnore
     private Set<Integer> friends = new HashSet<>();
+
     private int id;
 
     @NotBlank(message = "Электронная почта не может быть пустой")
@@ -26,7 +29,7 @@ public class User {
     private String name;
 
     @NotNull(message = "Дата рождения не может быть пустой")
-    @Past(message = "Дата рождения не может быть в будущем")
+    @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
     private StatusRelation statusRelation;
