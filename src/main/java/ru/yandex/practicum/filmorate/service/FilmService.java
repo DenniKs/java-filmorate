@@ -71,6 +71,7 @@ public class FilmService {
         log.info("Пользователь с id: {} удалил лайк фильму с id {}", userId, filmId);
         return filmStorage.getById(filmId);
     }
+
     public List<Film> getPopularFilms(int count) {
         log.info("Список популярных фильмов отправлен");
 
