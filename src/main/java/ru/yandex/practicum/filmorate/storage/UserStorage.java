@@ -8,9 +8,15 @@ import java.util.Map;
 public interface UserStorage {
 
     User create(User user);
+
     User update(User user);
+
     User getById(int id);
+
     User deleteById(int id);
+
     Collection<User> findAll();
+
     Map<Integer, User> getUsers();
+
 }
