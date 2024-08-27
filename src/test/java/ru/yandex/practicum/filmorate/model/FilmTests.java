@@ -5,6 +5,8 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
@@ -13,11 +15,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 public class FilmTests {
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     Validator validator = factory.getValidator();
 
-    FilmController filmController = new FilmController();
+    @Autowired
+    FilmController filmController;
 
     @Test
     public void testValidFilm() {
@@ -92,6 +96,4 @@ public class FilmTests {
         ConstraintViolation<Film> violation = violations.iterator().next();
         assertEquals("duration", violation.getPropertyPath().toString());
     }
-
-
 }
