@@ -5,8 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -14,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 public class User {
     @JsonIgnore
-    private Set<Integer> friends = new HashSet<>();
+    private Map<Integer, StatusRelation> friends = new HashMap<>();
 
     private int id;
 
@@ -32,5 +32,15 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
-    private StatusRelation statusRelation;
+    public void addOrUpdateFriend(int friendId, StatusRelation status) {
+        friends.put(friendId, status);
+    }
+
+    public void removeFriend(int friendId) {
+        friends.remove(friendId);
+    }
+
+    public StatusRelation getFriendshipStatus(int friendId) {
+        return friends.get(friendId);
+    }
 }

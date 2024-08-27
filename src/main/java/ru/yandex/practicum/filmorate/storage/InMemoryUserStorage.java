@@ -6,10 +6,7 @@ import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -47,15 +44,13 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getById(int id) {
-        return users.get(id);
+    public Optional<User> getById(int id) {
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
-    public User deleteById(int id) {
-        User user = users.get(id);
-        users.remove(id);
-        return user;
+    public Optional<User> deleteById(int id) {
+        return Optional.ofNullable(users.remove(id));
     }
 
     void validate(User user) {

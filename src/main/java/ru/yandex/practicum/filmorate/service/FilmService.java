@@ -35,43 +35,40 @@ public class FilmService {
     }
 
     public Film getById(int id) {
-        if (!filmStorage.getFilms().containsKey(id)) {
-            throw new ObjectNotFoundException("Фильм не найден");
-        }
+        Film film = filmStorage.getById(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Фильм не найден"));
         log.info("Фильм с id: {} отправлен", id);
-        return filmStorage.getById(id);
+        return film;
     }
 
     public Film deleteById(int id) {
-        if (!filmStorage.getFilms().containsKey(id)) {
-            throw new ObjectNotFoundException("Фильм не найден, удаление невозможно");
-        }
+        Film film = filmStorage.getById(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Фильм не найден, удаление невозможно"));
+        filmStorage.deleteById(id);
         log.info("Фильм с id: {} удалён", id);
-        return filmStorage.deleteById(id);
+        return film;
     }
 
     public Film addLike(int filmId, int userId) {
-        if (!filmStorage.getFilms().containsKey(filmId)) {
-            throw new ObjectNotFoundException("Фильм не найден");
-        }
+        Film film = filmStorage.getById(filmId)
+                .orElseThrow(() -> new ObjectNotFoundException("Фильм не найден"));
         if (!userStorage.getUsers().containsKey(userId)) {
             throw new ObjectNotFoundException("Пользователь не найден");
         }
-        filmStorage.getById(filmId).getUsersLikes().add(userId);
+        film.getUsersLikes().add(userId);
         log.info("Пользователь с id: {} поставил лайк фильму с id {}", userId, filmId);
-        return filmStorage.getById(filmId);
+        return film;
     }
 
     public Film removeLike(int filmId, int userId) {
-        if (!filmStorage.getFilms().containsKey(filmId)) {
-            throw new ObjectNotFoundException("Фильм не найден");
-        }
-        if (!filmStorage.getById(filmId).getUsersLikes().contains(userId)) {
+        Film film = filmStorage.getById(filmId)
+                .orElseThrow(() -> new ObjectNotFoundException("Фильм не найден"));
+        if (!film.getUsersLikes().contains(userId)) {
             throw new ObjectNotFoundException("Нет лайка от пользователя");
         }
-        filmStorage.getById(filmId).getUsersLikes().contains(userId);
+        film.getUsersLikes().remove(userId);
         log.info("Пользователь с id: {} удалил лайк фильму с id {}", userId, filmId);
-        return filmStorage.getById(filmId);
+        return film;
     }
 
     public List<Film> getPopularFilms(int count) {
