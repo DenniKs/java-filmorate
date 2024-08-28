@@ -5,19 +5,22 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 public class FilmTests {
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     Validator validator = factory.getValidator();
 
-    FilmController filmController = new FilmController();
+    @Autowired
+    FilmController filmController;
 
     @Test
     public void testValidFilm() {
@@ -71,10 +74,10 @@ public class FilmTests {
         film.setReleaseDate(LocalDate.of(1895, 12, 27));
         film.setDuration(120);
 
-        ValidationException exception = assertThrows(ValidationException.class, () -> filmController.addFilm(film));
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
 
-        assertEquals("До 28 декабря 1895 года кино не производили или продолжительность неверная",
-                exception.getMessage());
+        assertEquals(1, violations.size());
+        assertEquals("Дата релиза не может быть раньше 28 декабря 1895 года", violations.iterator().next().getMessage());
     }
 
     @Test
@@ -92,6 +95,4 @@ public class FilmTests {
         ConstraintViolation<Film> violation = violations.iterator().next();
         assertEquals("duration", violation.getPropertyPath().toString());
     }
-
-
 }
