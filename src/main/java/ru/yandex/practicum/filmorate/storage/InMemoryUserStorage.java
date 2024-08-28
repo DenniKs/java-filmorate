@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
@@ -51,26 +50,5 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public Optional<User> deleteById(int id) {
         return Optional.ofNullable(users.remove(id));
-    }
-
-    void validate(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.warn("Не заполнено Имя пользователя заменено на Логин: '{}'", user.getName());
-        }
-    }
-
-    private void check(User userToAdd) {
-        boolean exists = users.values().stream()
-                .anyMatch(user -> isAlreadyExist(userToAdd, user));
-        if (exists) {
-            log.warn("Введенный Email пользователя: '{}'", userToAdd);
-            throw new ValidationException("Пользователь с таким Email или логином уже существует");
-        }
-    }
-
-    private boolean isAlreadyExist(User userToAdd, User user) {
-        return userToAdd.getLogin().equals(user.getLogin()) ||
-                userToAdd.getEmail().equals(user.getEmail());
     }
 }

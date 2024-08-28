@@ -13,10 +13,10 @@ import java.util.Map;
 @AllArgsConstructor()
 @NoArgsConstructor
 public class User {
+    private int id;
+
     @JsonIgnore
     private Map<Integer, StatusRelation> friends = new HashMap<>();
-
-    private int id;
 
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Email(message = "Электронная почта должна быть валидной и содержать символ @")

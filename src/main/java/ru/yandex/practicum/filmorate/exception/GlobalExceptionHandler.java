@@ -18,49 +18,40 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler
+    @ExceptionHandler({ValidationException.class, ConstraintViolationException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handlerValidationException(final ValidationException e) {
-        log.info("400 {}", e.getMessage());
-        return new ErrorResponse(e.getMessage());
+    public ResponseEntity<Object> handleBadRequestExceptions(final Exception e) {
+        if (e instanceof MethodArgumentNotValidException) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : ((MethodArgumentNotValidException) e).getBindingResult().getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            log.info("400 Ошибки валидации: {}", errors);
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        } else {
+            log.info("400 {}", e.getMessage());
+            return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handlerNotFoundException(final ObjectNotFoundException e) {
+    public ErrorResponse handleNotFoundException(final ObjectNotFoundException e) {
         log.info("404 {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(InternalException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handlerInternalException(final InternalException e) {
+    public ErrorResponse handleInternalException(final InternalException e) {
         log.info("500 {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleAllUncaughtException(final Throwable e) {
         log.error("500 {}", e.getMessage(), e);
         return new ErrorResponse("Произошла неожиданная ошибка: " + e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError error : e.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
-        log.info("400 Ошибки валидации: {}", errors);
-        return errors;
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleConstraintViolationExceptions(ConstraintViolationException ex) {
-        log.info("Constraint violation error: {}", ex.getMessage());
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

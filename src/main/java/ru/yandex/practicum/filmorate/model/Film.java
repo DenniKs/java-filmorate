@@ -14,10 +14,10 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Film {
+    private int id;
+
     @JsonIgnore
     private Set<Integer> usersLikes = new HashSet<>();
-
-    private int id;
 
     @NotBlank(message = "Название не может быть пустым")
     private String name;
