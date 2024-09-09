@@ -1,2 +1,4 @@
-# java-filmorate
-Template repository for Filmorate project.
+## Сервис поиска и оценки фильмов
+
+### Диаграмма базы данных
+![img.png](image/schemaBD.png)

@@ -4,17 +4,11 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.InternalException;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
-import ru.yandex.practicum.filmorate.model.StatusRelation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +17,13 @@ public class UserService {
 
     private final UserStorage userStorage;
 
-    public User create(User user) {
+    public Optional<User> create(User user) {
         validate(user);
         check(user);
         return userStorage.create(user);
     }
 
-    public User update(User user) {
+    public Optional<User> update(User user) {
         validate(user);
         return userStorage.update(user);
     }
@@ -46,62 +40,40 @@ public class UserService {
         return user;
     }
 
-    public User deleteById(int id) {
-        User user = userStorage.deleteById(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Пользователь не найден. Невозможно удалить неизвестного пользователя"));
-        log.info("Пользователь с id: '{}' удален", id);
-        return user;
+    public void addFriendship(int supposedUserId, int supposedFriendId) {
+        User user = getUserStored(supposedUserId);
+        User friend = getUserStored(supposedFriendId);
+        userStorage.addFriend(user.getId(), friend.getId());
+        log.info("Пользователь с id: '{}' добавлен с список друзей пользователя с id: '{}'", supposedUserId, supposedFriendId);
     }
 
-    public List<User> addFriendship(int firstId, int secondId) {
-        User firstUser = getById(firstId);
-        User secondUser = getById(secondId);
-        if (firstUser.getFriendshipStatus(secondId) == StatusRelation.CONFIRMED_REQUEST) {
-            throw new InternalException("Пользователи уже являются друзьями");
+    public void removeFriendship(int supposedUserId, int supposedFriendId) {
+        User user = getUserStored(supposedUserId);
+        User friend = getUserStored(supposedFriendId);
+        userStorage.deleteFriend(user.getId(), friend.getId());
+        log.info("Пользователь с id: '{}' удален с пользователя с id: '{}'", supposedUserId, supposedFriendId);
+    }
+
+    public Collection<User> getFriendsListById(int userId) {
+
+        User user = getUserStored(userId);
+        Collection<User> friends = new HashSet<>();
+        for (Integer id : user.getFriends()) {
+            friends.add(userStorage.getUser(id));
         }
-        firstUser.addOrUpdateFriend(secondId, StatusRelation.SENT_REQUEST);
-        secondUser.addOrUpdateFriend(firstId, StatusRelation.SENT_REQUEST);
-
-        log.info("Запрос на добавление в друзья отправлен от '{}' к '{}'",
-                firstUser.getName(), secondUser.getName());
-
-        return Arrays.asList(firstUser, secondUser);
+        return friends;
     }
 
-    public List<User> removeFriendship(int firstId, int secondId) {
-        User firstUser = getById(firstId);
-        User secondUser = getById(secondId);
-        if (firstUser.getFriendshipStatus(secondId) == null) {
-            log.info("Пользователи: '{}' и '{}' не являются друзьями.",
-                    firstUser.getName(), secondUser.getName());
-            return Arrays.asList(firstUser, secondUser);
+    public Collection<User> getCommonFriendsList(int supposedUserId, int supposedOtherId) {
+        User user = getUserStored(supposedUserId);
+        User otherUser = getUserStored(supposedOtherId);
+        Collection<User> commonFriends = new HashSet<>();
+        for (Integer id : user.getFriends()) {
+            if (otherUser.getFriends().contains(id)) {
+                commonFriends.add(userStorage.getUser(id));
+            }
         }
-        firstUser.removeFriend(secondId);
-        secondUser.removeFriend(firstId);
-        log.info("Пользователи: '{}' и '{}' больше не друзья :(",
-                firstUser.getName(), secondUser.getName());
-        return Arrays.asList(firstUser, secondUser);
-    }
-
-    public List<User> getFriendsListById(int id) {
-        User user = getById(id);
-        log.info("Запрос на получение списка друзей пользователя '{}' выполнен успешно", user.getName());
-        return user.getFriends().keySet().stream()
-                .map(userStorage::getById)
-                .map(Optional::get)
-                .collect(Collectors.toList());
-    }
-
-    public List<User> getCommonFriendsList(int firstId, int secondId) {
-        User firstUser = getById(firstId);
-        User secondUser = getById(secondId);
-        log.info("Запрос на получение списка общих друзей пользователей '{}' и '{}' выполнен успешно",
-                firstUser.getName(), secondUser.getName());
-        return firstUser.getFriends().keySet().stream()
-                .filter(secondUser.getFriends()::containsKey)
-                .map(userStorage::getById)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+        return commonFriends;
     }
 
     private void validate(User user) {
@@ -112,7 +84,7 @@ public class UserService {
     }
 
     private void check(User userToAdd) {
-        boolean exists = userStorage.getUsers().values().stream()
+        boolean exists = userStorage.findAll().stream()
                 .anyMatch(user -> isAlreadyExist(userToAdd, user));
         if (exists) {
             log.warn("Введенный email пользователя: '{}'", userToAdd);
@@ -123,5 +95,17 @@ public class UserService {
     private boolean isAlreadyExist(User userToAdd, User user) {
         return userToAdd.getLogin().equals(user.getLogin()) ||
                 userToAdd.getEmail().equals(user.getEmail());
+    }
+
+    private User getUserStored(int supposedId) {
+
+        if (supposedId == Integer.MIN_VALUE) {
+            throw new ObjectNotFoundException(String.format("Не удалось найти id пользователя: %d", supposedId));
+        }
+        User user = userStorage.getUser(supposedId);
+        if (user == null) {
+            throw new ObjectNotFoundException(String.format("Пользователь с id: '%d' не зарегистрирован!", supposedId));
+        }
+        return user;
     }
 }

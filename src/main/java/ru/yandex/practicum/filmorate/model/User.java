@@ -1,12 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,9 +12,6 @@ import java.util.Map;
 @NoArgsConstructor
 public class User {
     private int id;
-
-    @JsonIgnore
-    private Map<Integer, StatusRelation> friends = new HashMap<>();
 
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Email(message = "Электронная почта должна быть валидной и содержать символ @")
@@ -32,15 +27,12 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
-    public void addOrUpdateFriend(int friendId, StatusRelation status) {
-        friends.put(friendId, status);
-    }
+    private List<Integer> friends;
 
-    public void removeFriend(int friendId) {
-        friends.remove(friendId);
+    public boolean addFriend(Integer id) {
+        return friends.add(id);
     }
-
-    public StatusRelation getFriendshipStatus(int friendId) {
-        return friends.get(friendId);
+    public boolean deleteFriend(Integer id) {
+        return friends.remove(id);
     }
 }
