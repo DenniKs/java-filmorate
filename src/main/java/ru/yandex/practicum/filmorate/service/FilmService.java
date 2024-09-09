@@ -28,7 +28,7 @@ public class FilmService {
     private final GenreStorage genreStorage;
 
     public Optional<Film> create(Film film) throws ValidationException {
-//        check(film);
+        check(film);
 
         try {
             mpaStorage.getMpaById(film.getMpa().getId());
@@ -106,6 +106,9 @@ public class FilmService {
 
     private boolean isAlreadyExist(Film filmToAdd, Film film) {
         return filmToAdd.getName().equals(film.getName()) &&
-                filmToAdd.getReleaseDate().equals(film.getReleaseDate());
+                filmToAdd.getReleaseDate().equals(film.getReleaseDate()) &&
+                filmToAdd.getDuration() == (film.getDuration()) &&
+                filmToAdd.getMpa().equals(film.getMpa()) &&
+                filmToAdd.getGenres().equals(film.getGenres());
     }
 }
