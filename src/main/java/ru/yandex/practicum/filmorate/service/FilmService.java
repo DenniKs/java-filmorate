@@ -28,7 +28,7 @@ public class FilmService {
     private final GenreStorage genreStorage;
 
     public Optional<Film> create(Film film) throws ValidationException {
-        check(film);
+//        check(film);
 
         try {
             mpaStorage.getMpaById(film.getMpa().getId());
