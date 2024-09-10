@@ -30,7 +30,7 @@ class MpaStorageTest {
 
     @Test
     public void getMpaByIdTest() {
-        Optional<Mpa> mpaOptional = Optional.ofNullable(mpaStorage.getMpaById(1));
+        Optional<Mpa> mpaOptional = mpaStorage.getMpaById(1);
         assertThat(mpaOptional)
                 .isPresent()
                 .hasValueSatisfying(mpa ->
