@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.sql.*;
 import java.sql.Date;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component("UserDbStorage")
 @RequiredArgsConstructor
@@ -23,8 +24,9 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Optional<User> create(User user) {
         final String sqlQuery = "INSERT INTO USERS (EMAIL, LOGIN, USER_NAME, BIRTHDAY) " +
-                "VALUES ( ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
+
         jdbcTemplate.update(connection -> {
             final PreparedStatement prepareStatement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS);
             prepareStatement.setString(1, user.getEmail());
@@ -36,11 +38,16 @@ public class UserDbStorage implements UserStorage {
 
         int id = Objects.requireNonNull(keyHolder.getKey()).intValue();
 
-        if (user.getFriends() != null) {
-            for (Integer friendId : user.getFriends()) {
-                addFriend(user.getId(), friendId);
-            }
+        if (user.getFriends() != null && !user.getFriends().isEmpty()) {
+            String friendsSqlQuery = "INSERT INTO FRIENDS (USER_ID, FRIEND_ID) VALUES (?, ?)";
+
+            List<Object[]> batchArgs = user.getFriends().stream()
+                    .map(friendId -> new Object[] {id, friendId})
+                    .collect(Collectors.toList());
+
+            jdbcTemplate.batchUpdate(friendsSqlQuery, batchArgs);
         }
+
         return this.getById(id);
     }
 
@@ -54,9 +61,8 @@ public class UserDbStorage implements UserStorage {
 
     public Optional<User> getById(int id) {
         final String sqlQuery = "SELECT * FROM USERS WHERE USER_ID = ?";
-        User user;
         try {
-            user = jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
+            User user = jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
             return Optional.ofNullable(user);
         } catch (EmptyResultDataAccessException e) {
             throw new ObjectNotFoundException("Пользователь с id: '" + id + "' не зарегистрирован!");
@@ -64,16 +70,11 @@ public class UserDbStorage implements UserStorage {
     }
 
     public Optional<User> deleteById(int id) {
-        Optional<User> userOptional = getById(id);
-
-        if (userOptional.isEmpty()) {
-            return Optional.empty();
-        }
-
-        final String sqlQuery = "DELETE FROM USERS WHERE USER_ID = ?";
-        jdbcTemplate.update(sqlQuery, id);
-
-        return userOptional;
+        return getById(id).map(user -> {
+            final String sqlQuery = "DELETE FROM USERS WHERE USER_ID = ?";
+            jdbcTemplate.update(sqlQuery, id);
+            return user;
+        });
     }
 
     @Override
@@ -90,11 +91,10 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public boolean addFriend(Integer userId, Integer friendId) {
-        boolean friendAccepted;
         String sqlGetReversFriend = "SELECT * FROM FRIENDSHIP " +
                 "WHERE USER_ID = ? AND FRIEND_ID = ?";
         SqlRowSet rs = jdbcTemplate.queryForRowSet(sqlGetReversFriend, friendId, userId);
-        friendAccepted = rs.next();
+        boolean friendAccepted = rs.next();
         String sqlSetFriend = "INSERT INTO FRIENDSHIP (USER_ID, FRIEND_ID, STATUS) " +
                 "VALUES (?, ?, ?)";
         jdbcTemplate.update(sqlSetFriend, userId, friendId, friendAccepted);
@@ -117,21 +117,15 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public Map<Integer, User> getUsers() {
-        return null;
-    }
-
-    @Override
     public User getUser(Integer id) {
         String sqlQuery = "SELECT * FROM USERS WHERE USER_ID = ?";
-        User user;
+
         try {
-            user = jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
+            return jdbcTemplate.queryForObject(sqlQuery, (rs, rowNum) -> makeUser(rs), id);
         } catch (EmptyResultDataAccessException e) {
             throw new ObjectNotFoundException("Пользователь с id: " +
                     id + " не зарегистрирован!");
         }
-        return user;
     }
 
     private User makeUser(ResultSet resultSet) throws SQLException {

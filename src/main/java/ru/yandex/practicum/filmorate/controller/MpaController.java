@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.MpaService;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class MpaController {
     }
 
     @GetMapping("/{id}")
-    public Mpa getMpaById(@PathVariable int id) {
+    public Optional<Mpa> getMpaById(@PathVariable int id) {
         log.info("Получен запрос GET по адресу: '/mpa/{}'", id);
         return mpaService.getMpaById(id);
     }

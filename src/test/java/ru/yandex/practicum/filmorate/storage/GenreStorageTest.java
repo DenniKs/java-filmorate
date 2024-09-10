@@ -37,7 +37,7 @@ class GenreStorageTest {
 
     @Test
     public void getGenreByIdTest() {
-        Optional<Genre> genreOptional = Optional.ofNullable(genreStorage.getGenreById(1));
+        Optional<Genre> genreOptional = genreStorage.getGenreById(1);
         assertThat(genreOptional)
                 .isPresent()
                 .hasValueSatisfying(genre ->

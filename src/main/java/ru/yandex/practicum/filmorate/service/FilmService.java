@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -16,6 +15,8 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +31,20 @@ public class FilmService {
     public Optional<Film> create(Film film) throws ValidationException {
         check(film);
 
-        try {
-            mpaStorage.getMpaById(film.getMpa().getId());
-        } catch (EmptyResultDataAccessException e) {
+        if (mpaStorage.getMpaById(film.getMpa().getId()).isEmpty()) {
             throw new ValidationException(String.format("Возрастной рейтинг с id: '%d' не найден", film.getMpa().getId()));
         }
 
-        for (Genre genre : film.getGenres()) {
-            try {
-                genreStorage.getGenreById(genre.getId());
-            } catch (EmptyResultDataAccessException e) {
-                throw new ValidationException(String.format("Жанр с id: '%d' не найден", genre.getId()));
-            }
+        Set<Integer> genreFilmIds = film.getGenres().stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+
+        Set<Integer> genresIds = genreStorage.getAllGenres().stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+
+        if (!genresIds.containsAll(genreFilmIds)) {
+            throw new ValidationException("Один или несколько жанров не найдены в списке доступных жанров");
         }
 
         return filmStorage.create(film);
@@ -86,13 +89,10 @@ public class FilmService {
 
     private Film getFilmStored(int supposedId) {
         if (supposedId == Integer.MIN_VALUE) {
-            throw new ObjectNotFoundException(String.format("Не удалось найти id фильма: '{}'", supposedId));
+            throw new ObjectNotFoundException(String.format("Не удалось найти id фильма: '%d'", supposedId));
         }
-        Optional<Film> film = filmStorage.getById(supposedId);
-        if (film.isEmpty()) {
-            throw new ObjectNotFoundException(String.format("Фильм с id: '%d' не найден", supposedId));
-        }
-        return film.orElse(null);
+        return filmStorage.getById(supposedId)
+                .orElseThrow(() -> new ObjectNotFoundException(String.format("Фильм с id: '%d' не найден", supposedId)));
     }
 
     private void check(Film filmToAdd) {

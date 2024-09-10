@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class GenreController {
     }
 
     @GetMapping("/{id}")
-    public Genre getGenreById(@PathVariable int id) {
+    public Optional<Genre> getGenreById(@PathVariable int id) {
         log.info("Получен GET запрос по адресу '/genres/{}'", id);
         return genreService.getGenreById(id);
     }

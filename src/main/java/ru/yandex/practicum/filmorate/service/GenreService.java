@@ -2,13 +2,13 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ObjectNotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -23,19 +23,19 @@ public class GenreService {
         return genreStorage.getGenresByFilmId(filmId);
     }
 
-    public Genre getGenreById(int strId) {
-        try {
-            return genreStorage.getGenreById(strId);
-        } catch (EmptyResultDataAccessException e) {
+    public Optional<Genre> getGenreById(int strId) {
+        Optional<Genre> genre = genreStorage.getGenreById(strId);
+        if (genre.isEmpty()) {
             throw new ObjectNotFoundException(String.format("Жанр с id: '%d' не найден", strId));
         }
+        return genre;
     }
 
-    public boolean deleteFilmGenres(int filmId) {
-        return genreStorage.deleteFilmGenres(filmId);
+    public void deleteFilmGenres(int filmId) {
+        genreStorage.deleteFilmGenres(filmId);
     }
 
-    public boolean addFilmGenres(int filmId, Collection<Genre> genres) {
-        return genreStorage.addFilmGenres(filmId, genres);
+    public void addFilmGenres(int filmId, Collection<Genre> genres) {
+        genreStorage.addFilmGenres(filmId, genres);
     }
 }

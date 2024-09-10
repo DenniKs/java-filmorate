@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage.dao;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -9,6 +10,7 @@ import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -28,8 +30,13 @@ public class MpaDbStorage implements MpaStorage {
     }
 
     @Override
-    public Mpa getMpaById(int mpaId) {
+    public Optional<Mpa> getMpaById(int mpaId) {
         String sqlQuery = "SELECT * FROM RATING_MPA WHERE RATING_ID = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::makeMpa, mpaId);
+        try {
+            Mpa mpa = jdbcTemplate.queryForObject(sqlQuery, this::makeMpa, mpaId);
+            return Optional.ofNullable(mpa);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }
