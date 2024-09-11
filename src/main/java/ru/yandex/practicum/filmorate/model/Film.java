@@ -1,13 +1,12 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import ru.yandex.practicum.filmorate.validation.ValidReleaseDate;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,9 +14,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class Film {
     private int id;
-
-    @JsonIgnore
-    private Set<Integer> usersLikes = new HashSet<>();
 
     @NotBlank(message = "Название не может быть пустым")
     private String name;
@@ -32,6 +28,18 @@ public class Film {
 
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
+    private int rate;
 
-    private RatingMpa ratingMpa;
+    private Mpa mpa;
+
+    private List<Genre> genres = new ArrayList<>();
+    private List<Integer> likes = new ArrayList<>();
+
+    public boolean addLike(Integer id) {
+        return likes.add(id);
+    }
+
+    public boolean deleteLike(Integer id) {
+        return likes.remove(id);
+    }
 }
